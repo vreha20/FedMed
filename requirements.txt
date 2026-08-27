@@ -1,0 +1,21 @@
+torch>=2.0.0
+monai>=1.3.0
+nibabel>=5.1.0
+numpy>=1.24.0
+pandas>=2.0.0
+matplotlib>=3.7.0
+scikit-learn>=1.3.0
+tqdm>=4.65.0
+pyyaml>=6.0
+
+# Week 2 onward (federated learning)
+flwr>=1.7.0
+
+# Week 3 onward (encryption)
+tenseal>=0.3.14
+
+# Backend (teammate's side, listed here so repo is complete)
+fastapi>=0.104.0
+uvicorn>=0.24.0
+grpcio>=1.59.0
+websockets>=12.0
