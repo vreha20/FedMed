@@ -21,3 +21,8 @@ venv/
 # Logs (keep folder, ignore contents)
 logs/*
 !logs/.gitkeep
+# Node.js dependencies
+node_modules/
+
+# Build outputs
+dist/
