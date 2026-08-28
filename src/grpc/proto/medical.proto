@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package medical;
+
+// The MedCommunication service.
+service MedCommunication {
+  // Sends data from a client to the server and gets a response.
+  rpc SendData (DataRequest) returns (DataResponse);
+}
+
+// The request message containing the client's data.
+message DataRequest {
+  // Unique identifier for the client (hospital).
+  string client_id = 1;
+  // Current round number in federated learning.
+  int32 round_number = 2;
+  // Optional message or payload.
+  string message = 3;
+}
+
+// The response message from the server.
+message DataResponse {
+  // A message from the server.
+  string server_message = 1;
+  // Indicates if the request was processed successfully.
+  bool success = 2;
+}

@@ -1,0 +1,33 @@
+.metrics-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.kpi-card {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  padding: 1rem;
+  min-width: 120px;
+  text-align: center;
+}
+
+.kpi-card h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.kpi-card .value {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.metrics-display.empty {
+  padding: 2rem;
+  text-align: center;
+  opacity: 0.6;
+}

@@ -1,0 +1,48 @@
+.node-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.node-card {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  padding: 1rem;
+  min-width: 140px;
+  text-align: center;
+}
+
+.node-card.online {
+  border-color: #4caf50;
+}
+
+.node-card.offline {
+  border-color: #f44336;
+}
+
+.node-card h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.node-card .status {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0.5rem 0;
+}
+
+.node-card .status.online {
+  color: #4caf50;
+}
+
+.node-card .status.offline {
+  color: #f44336;
+}
+
+.node-card .detail {
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
