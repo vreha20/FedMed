@@ -22,9 +22,9 @@ function App() {
         fetchHistory(),
         fetchHealth()
       ])
-      if (latestRes) setLatest(latestRes)
-      if (historyRes) setHistory(historyRes)
-      if (healthRes) setHealth(healthRes)
+      setLatest(latestRes)
+      setHistory(historyRes)
+      setHealth(healthRes)
     } catch (err) {
       setError(err.message || 'Unknown error')
       console.error('Failed to fetch metrics:', err)
