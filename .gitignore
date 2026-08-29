@@ -1,5 +1,5 @@
 # Data — never commit MRI files, they're huge
-data/
+/data/
 *.nii
 *.nii.gz
 
