@@ -1,18 +1,11 @@
-"""
-src/client/flower_client.py
-
-Real Flower client (replaces Week 1 dummy scaffolding): trains the
-3D U-Net locally on a hospital's data shard and returns updated
-weights to the server for FedAvg aggregation.
-"""
-
 import torch
 import flwr as fl
 from torch.utils.data import DataLoader
 from monai.losses import DiceLoss
+from monai.metrics import DiceMetric
 
-from src.models.unet3d import build_unet3d
-from src.data.dataset import BraTSVolumeDataset
+from model import build_unet3d
+from dataset import BraTSVolumeDataset, group_slices_by_volume
 
 
 def get_model_params(model):
@@ -34,6 +27,7 @@ class HospitalClient(fl.client.NumPyClient):
         self.dataset = BraTSVolumeDataset(data_dir, volume_ids)
         self.loader = DataLoader(self.dataset, batch_size=1, shuffle=True)
         self.loss_fn = DiceLoss(sigmoid=True)
+        self.dice_metric = DiceMetric(include_background=True, reduction="mean")
 
     def get_parameters(self, config):
         return get_model_params(self.model)
@@ -57,11 +51,15 @@ class HospitalClient(fl.client.NumPyClient):
         set_model_params(self.model, parameters)
         self.model.eval()
         total_loss = 0
+        self.dice_metric.reset()
         with torch.no_grad():
             for images, masks in self.loader:
                 images, masks = images.to(self.device), masks.to(self.device)
                 outputs = self.model(images)
                 loss = self.loss_fn(outputs, masks)
                 total_loss += loss.item()
+                preds = torch.sigmoid(outputs) > 0.5
+                self.dice_metric(y_pred=preds, y=masks)
         avg_loss = total_loss / len(self.loader)
-        return avg_loss, len(self.dataset), {"cid": self.cid}
+        dice_score = self.dice_metric.aggregate().item()
+        return avg_loss, len(self.dataset), {"cid": self.cid, "dice": dice_score}
