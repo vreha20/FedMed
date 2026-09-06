@@ -1,10 +1,26 @@
+"""
+src/federated/fed_simulation.py
+
+Runs Flower's simulation mode with 3 hospital clients, each training
+on a separate data shard, aggregated via FedAvg. Configuration
+(num_clients, rounds, local_epochs) is read from configs/config.yaml
+rather than hardcoded, so hyperparameters can be tuned without
+touching this file.
+"""
+
 import random
+import yaml
 import torch
 import flwr as fl
 from flwr.simulation import start_simulation
 
-from flower_client import HospitalClient
-from dataset import group_slices_by_volume
+from src.client.flower_client import HospitalClient
+from src.data.dataset import group_slices_by_volume
+
+
+def load_config(path="configs/config.yaml"):
+    with open(path, "r") as f:
+        return yaml.safe_load(f)
 
 
 def make_client_fn(data_dir, shards, device):
@@ -16,18 +32,29 @@ def make_client_fn(data_dir, shards, device):
 
 
 def weighted_dice_average(metrics):
+    """Aggregates Dice scores across clients, weighted by dataset size."""
     total_examples = sum(num for num, _ in metrics)
     weighted_dice = sum(num * m["dice"] for num, m in metrics)
     return {"dice": weighted_dice / total_examples}
 
 
-def run_simulation(data_dir, num_clients=3, num_rounds=5, volumes_per_client=6):
+def run_simulation(data_dir, config_path="configs/config.yaml"):
+    cfg = load_config(config_path)
+    fed_cfg = cfg["federated"]
+
+    num_clients = fed_cfg["num_clients"]
+    num_rounds = fed_cfg["rounds"]
+    local_epochs = fed_cfg["local_epochs"]
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     groups = group_slices_by_volume(data_dir)
     all_ids = list(groups.keys())
     random.seed(42)
     random.shuffle(all_ids)
 
+    # Split into non-overlapping shards - one per simulated hospital,
+    # so no patient data is ever shared between clients
+    volumes_per_client = len(all_ids) // num_clients
     shards = [
         all_ids[i * volumes_per_client:(i + 1) * volumes_per_client]
         for i in range(num_clients)
@@ -42,6 +69,7 @@ def run_simulation(data_dir, num_clients=3, num_rounds=5, volumes_per_client=6):
         min_evaluate_clients=num_clients,
         min_available_clients=num_clients,
         evaluate_metrics_aggregation_fn=weighted_dice_average,
+        on_fit_config_fn=lambda rnd: {"local_epochs": local_epochs},
     )
 
     history = start_simulation(
@@ -53,3 +81,10 @@ def run_simulation(data_dir, num_clients=3, num_rounds=5, volumes_per_client=6):
     )
 
     return history
+
+
+if __name__ == "__main__":
+    from src.utils.data_path import find_dataset_path
+    DATA_DIR = find_dataset_path()
+    history = run_simulation(DATA_DIR)
+    print("Dice history:", history.metrics_distributed)
