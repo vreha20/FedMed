@@ -28,9 +28,11 @@ pip install -r requirements.txt
 
 | Member | Role |
 |---|---|
-| Vrehaa | PPML/ML core — U-Net baseline, federated training loop, encryption, differential privacy |
-| [Nishanth] | Infra/Backend — Flower node setup, gRPC comms, live metrics, React dashboard |
+| Vreha | PPML/ML core — U-Net baseline, federated training loop, encryption, differential privacy |
+| Nishanth | Infra/Backend — Flower node setup, gRPC comms, live metrics, React dashboard |
 
 ## Status
 
-Week 1: Centralized baseline — in progress
+- Week 1 (Centralized baseline): Complete — 3D U-Net trained on BraTS subset, Dice score 0.1945
+- Week 2 (Federated learning): Complete — Flower client + FedAvg simulation working, config-driven, Dice score improving across rounds
+- Week 3-4 (Encryption + differential privacy): Not yet started
