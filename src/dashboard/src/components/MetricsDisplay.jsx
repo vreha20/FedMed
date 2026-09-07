@@ -21,7 +21,7 @@ const MetricsDisplay = ({ latest }) => {
         <p className="value">{loss.toFixed(4)}</p>
       </div>
       <div className="kpi-card">
-        <h3>Accuracy</h3>
+      <h3>Dice Score</h3>
         <p className="value">
           {accuracy !== null ? accuracy.toFixed(4) : 'N/A'}
         </p>

@@ -17,7 +17,7 @@ const MetricsHistory = ({ history }) => {
   return (
     <div className="metrics-history">
       <div className="chart-container">
-        <h3>Loss / Accuracy Over Rounds</h3>
+        <h3>Loss / Dice Score Over Rounds</h3>
         <div className="chart">
           {history.map((h) => {
             const lossPct = (h.loss / maxLoss) * 100
@@ -27,7 +27,7 @@ const MetricsHistory = ({ history }) => {
             return (
               <div key={h.round} className="chart-group">
                 <div className="chart-bar loss" style={{ height: lossPctStr }} title={'Loss: ' + h.loss.toFixed(4)} />
-                <div className="chart-bar acc" style={{ height: accPctStr }} title={'Accuracy: ' + (h.accuracy !== null ? h.accuracy.toFixed(4) : 'N/A')} />
+                <div className="chart-bar acc" style={{ height: accPctStr }} title={'Dice Score: ' + (h.accuracy !== null ? h.accuracy.toFixed(4) : 'N/A')} />
                 <div className="chart-label">R{h.round}</div>
               </div>
             )
@@ -42,7 +42,7 @@ const MetricsHistory = ({ history }) => {
             <tr>
               <th>Round</th>
               <th>Loss</th>
-              <th>Accuracy</th>
+              <th>Dice Score</th>
               <th>Timestamp</th>
             </tr>
           </thead>
