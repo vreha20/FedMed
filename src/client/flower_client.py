@@ -4,8 +4,8 @@ from torch.utils.data import DataLoader
 from monai.losses import DiceLoss
 from monai.metrics import DiceMetric
 
-from model import build_unet3d
-from dataset import BraTSVolumeDataset, group_slices_by_volume
+from src.models.unet3d import build_unet3d
+from src.data.dataset import BraTSVolumeDataset, group_slices_by_volume
 
 
 def get_model_params(model):
