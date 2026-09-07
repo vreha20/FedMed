@@ -3,38 +3,58 @@ Custom Flower strategy that forwards aggregated metrics to the FastAPI store.
 """
 
 from flwr.server.strategy import FedAvg
-# Import the helper that already exists in the metrics router
 from src.backend.routes.metrics import update_metrics
 
 
+def weighted_dice_average(metrics):
+    """Aggregate client Dice scores weighted by the number of examples."""
+    if not metrics:
+        return {}
+
+    total_examples = sum(num_examples for num_examples, _ in metrics)
+
+    if total_examples == 0:
+        return {}
+
+    weighted_dice = sum(
+        num_examples * metrics_dict.get("dice", 0.0)
+        for num_examples, metrics_dict in metrics
+    )
+
+    return {"dice": weighted_dice / total_examples}
+
+
 class MetricsFedAvg(FedAvg):
-    """FedAvg that calls update_metrics after each aggregation round."""
+    """FedAvg strategy that forwards federated evaluation metrics."""
 
-    def aggregate_fit(
-        self, rnd, results, failures
-    ):
-        # Run the original FedAvg aggregation
-        aggregated_result = super().aggregate_fit(rnd, results, failures)
-        if aggregated_result is not None:
-            parameters_agg, metrics_agg = aggregated_result
-            # Extract loss/accuracy (use defaults if missing)
-            loss = float(metrics_agg.get("loss", 0.0))
-            accuracy = metrics_agg.get("accuracy")
-            if accuracy is not None:
-                accuracy = float(accuracy)
-            # Push to the FastAPI in‑memory store
-            update_metrics(round_num=rnd, loss=loss, accuracy=accuracy)
-        return aggregated_result
+    def __init__(self, *args, **kwargs):
+        """Configure FedAvg with Dice metric aggregation."""
+        kwargs["evaluate_metrics_aggregation_fn"] = weighted_dice_average
+        super().__init__(*args, **kwargs)
 
-    def aggregate_evaluate(
-        self, rnd, results, failures
-    ):
-        aggregated_result = super().aggregate_evaluate(rnd, results, failures)
+    def aggregate_fit(self, rnd, results, failures):
+        """Aggregate client training results."""
+        return super().aggregate_fit(rnd, results, failures)
+
+    def aggregate_evaluate(self, rnd, results, failures):
+        """Aggregate evaluation metrics and forward Dice score to the API."""
+        aggregated_result = super().aggregate_evaluate(
+            rnd, results, failures
+        )
+
         if aggregated_result is not None:
             loss_agg, metrics_agg = aggregated_result
+
             loss = float(loss_agg) if loss_agg is not None else 0.0
-            accuracy = metrics_agg.get("accuracy")
-            if accuracy is not None:
-                accuracy = float(accuracy)
-            update_metrics(round_num=rnd, loss=loss, accuracy=accuracy)
+
+            dice = metrics_agg.get("dice")
+            if dice is not None:
+                dice = float(dice)
+
+            update_metrics(
+                round_num=rnd,
+                loss=loss,
+                accuracy=dice,
+            )
+
         return aggregated_result
