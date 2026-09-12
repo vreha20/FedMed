@@ -21,8 +21,8 @@ training:
 
 federated:
   num_clients: 3
-  rounds: 10
-  local_epochs: 2
+  rounds: 2
+  local_epochs: 1
 
 privacy:
   encryption: "tenseal"
