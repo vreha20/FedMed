@@ -6,6 +6,7 @@ from monai.metrics import DiceMetric
 
 from src.models.unet3d import build_unet3d
 from src.data.dataset import BraTSVolumeDataset, group_slices_by_volume
+from src.privacy.dp import add_dp_noise
 
 
 def get_model_params(model):
@@ -45,7 +46,8 @@ class HospitalClient(fl.client.NumPyClient):
                 loss = self.loss_fn(outputs, masks)
                 loss.backward()
                 optimizer.step()
-        return get_model_params(self.model), len(self.dataset), {"cid": self.cid}
+        noisy_params = add_dp_noise(get_model_params(self.model), noise_multiplier=config.get("dp_noise_multiplier", 1.0))
+        return noisy_params, len(self.dataset), {"cid": self.cid}
 
     def evaluate(self, parameters, config):
         set_model_params(self.model, parameters)

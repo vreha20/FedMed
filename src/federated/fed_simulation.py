@@ -45,6 +45,7 @@ def run_simulation(data_dir, config_path="configs/config.yaml"):
     num_clients = fed_cfg["num_clients"]
     num_rounds = fed_cfg["rounds"]
     local_epochs = fed_cfg["local_epochs"]
+    dp_noise_multiplier = cfg["privacy"]["dp_noise_multiplier"]
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     groups = group_slices_by_volume(data_dir)
@@ -69,7 +70,7 @@ def run_simulation(data_dir, config_path="configs/config.yaml"):
         min_evaluate_clients=num_clients,
         min_available_clients=num_clients,
         evaluate_metrics_aggregation_fn=weighted_dice_average,
-        on_fit_config_fn=lambda rnd: {"local_epochs": local_epochs},
+        on_fit_config_fn=lambda rnd: {"local_epochs": local_epochs, "dp_noise_multiplier": dp_noise_multiplier},
     )
 
     history = start_simulation(
