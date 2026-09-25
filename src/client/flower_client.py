@@ -7,6 +7,7 @@ from monai.metrics import DiceMetric
 from src.models.unet3d import build_unet3d
 from src.data.dataset import BraTSVolumeDataset, group_slices_by_volume
 from src.privacy.dp import add_dp_noise
+from src.privacy.encryption import create_context, encrypt_array, decrypt_array
 
 
 def get_model_params(model):
@@ -47,6 +48,18 @@ class HospitalClient(fl.client.NumPyClient):
                 loss.backward()
                 optimizer.step()
         noisy_params = add_dp_noise(get_model_params(self.model), noise_multiplier=config.get("dp_noise_multiplier", 1.0))
+
+        # Encrypt the final layer (weight + bias) with TenSEAL before sending
+        context = create_context()
+        final_weight_shape = noisy_params[61].shape
+        final_bias_shape = noisy_params[62].shape
+        enc_weight = encrypt_array(context, noisy_params[61])
+        enc_bias = encrypt_array(context, noisy_params[62])
+        dec_weight = decrypt_array(enc_weight, final_weight_shape)
+        dec_bias = decrypt_array(enc_bias, final_bias_shape)
+        noisy_params[61] = dec_weight.astype(noisy_params[61].dtype)
+        noisy_params[62] = dec_bias.astype(noisy_params[62].dtype)
+
         return noisy_params, len(self.dataset), {"cid": self.cid}
 
     def evaluate(self, parameters, config):
