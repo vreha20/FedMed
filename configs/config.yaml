@@ -4,7 +4,7 @@
 data:
   root_dir: "data/brats_mini"
   modalities: ["t1", "t1ce", "t2", "flair"]  # 4 input channels
-  image_size: [128, 128, 128]                 # resized volume dims
+  image_size: [64, 64, 64]                 # resized volume dims
   train_split: 0.8
 
 model:
@@ -14,7 +14,7 @@ model:
   strides: [2, 2, 2, 2]
 
 training:
-  batch_size: 2            # small — CPU/Colab-free-tier realistic
+  batch_size: 4            # small — CPU/Colab-free-tier realistic
   epochs: 30
   learning_rate: 0.0001
   optimizer: "Adam"
