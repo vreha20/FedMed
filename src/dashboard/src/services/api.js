@@ -23,6 +23,16 @@ export const fetchHistory = async () => {
   }
 }
 
+export const fetchClientMetrics = async () => {
+  try {
+    const response = await fetch(`${API_BASE}/api/metrics/clients`)
+    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    return await response.json()
+  } catch (err) {
+    throw err
+  }
+}
+
 export const fetchHealth = async () => {
   try {
     const response = await fetch(`${API_BASE}/api/health`)

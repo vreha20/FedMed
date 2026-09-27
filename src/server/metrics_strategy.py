@@ -55,6 +55,7 @@ class MetricsFedAvg(FedAvg):
                 round_num=rnd,
                 loss=loss,
                 accuracy=dice,
+                client_eval_results=results,  # Pass raw client results for per-client storage
             )
 
         return aggregated_result

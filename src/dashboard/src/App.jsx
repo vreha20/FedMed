@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { fetchLatest, fetchHistory, fetchHealth } from './services/api'
+import { fetchLatest, fetchHistory, fetchHealth, fetchClientMetrics } from './services/api'
 import MetricsDisplay from './components/MetricsDisplay'
 import MetricsHistory from './components/MetricsHistory'
 import NodeStatus from './components/NodeStatus'
@@ -9,6 +9,7 @@ function App() {
   const [latest, setLatest] = useState(null)
   const [history, setHistory] = useState([])
   const [health, setHealth] = useState(null)
+  const [clientMetrics, setClientMetrics] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -16,14 +17,16 @@ function App() {
     setLoading(true)
     setError(null)
     try {
-      const [latestRes, historyRes, healthRes] = await Promise.all([
+      const [latestRes, historyRes, healthRes, clientMetricsRes] = await Promise.all([
         fetchLatest(),
         fetchHistory(),
-        fetchHealth()
+        fetchHealth(),
+        fetchClientMetrics()
       ])
       setLatest(latestRes)
       setHistory(historyRes)
       setHealth(healthRes)
+      setClientMetrics(clientMetricsRes)
     } catch (err) {
       setError(err.message || 'Unknown error')
       console.error('Failed to fetch metrics:', err)
@@ -38,7 +41,7 @@ function App() {
     return () => clearInterval(interval)
   }, [])
 
-  if (loading && latest === null && history.length === 0) {
+  if (loading && latest === null && history.length === 0 && clientMetrics === null) {
     return <div className="container">Loading dashboard data...</div>
   }
 
@@ -72,7 +75,7 @@ function App() {
 
         <section className="node-status">
           <h2>Federation Nodes</h2>
-          <NodeStatus latest={latest} loading={loading} />
+          <NodeStatus latest={latest} clientMetrics={clientMetrics} loading={loading} />
         </section>
 
         <section className="visualization">
