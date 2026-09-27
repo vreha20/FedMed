@@ -22,9 +22,10 @@ def set_model_params(model, params):
 
 
 class HospitalClient(fl.client.NumPyClient):
-    def __init__(self, cid, data_dir, volume_ids, device):
+    def __init__(self, cid, data_dir, volume_ids, device, context=None):
         self.cid = cid
         self.device = device
+        self.context = context
         self.model = build_unet3d().to(device)
         self.dataset = BraTSVolumeDataset(data_dir, volume_ids)
         self.loader = DataLoader(self.dataset, batch_size=1, shuffle=True)
@@ -49,7 +50,9 @@ class HospitalClient(fl.client.NumPyClient):
                 optimizer.step()
         noisy_params = add_dp_noise(get_model_params(self.model), noise_multiplier=config.get("dp_noise_multiplier", 1.0))
 
-        # Encrypt the final layer (weight + bias) with TenSEAL before sending
+        # Encrypt the final layer (weight + bias) with TenSEAL, then decrypt
+        # (demonstrates the crypto pipeline; true cross-process handoff blocked
+        # by a protobuf version conflict between TenSEAL and Flower/Ray)
         context = create_context()
         final_weight_shape = noisy_params[61].shape
         final_bias_shape = noisy_params[62].shape

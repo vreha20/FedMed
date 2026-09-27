@@ -1,26 +1,46 @@
 import tenseal as ts
 import numpy as np
+import os
+
+CONTEXT_PATH = "shared_context.tenseal"
+
 
 def create_context():
-    """Creates a TenSEAL CKKS context for homomorphic encryption."""
     context = ts.context(
         ts.SCHEME_TYPE.CKKS,
         poly_modulus_degree=8192,
         coeff_mod_bit_sizes=[60, 40, 40, 60]
     )
-    context.generate_galois_keys()
     context.global_scale = 2**40
     return context
 
 
+def get_shared_context():
+    """Loads the shared context from disk, or creates one if missing.
+    In this simulation, client and server share one context to represent
+    the key infrastructure a real deployment would manage separately."""
+    if os.path.exists(CONTEXT_PATH):
+        with open(CONTEXT_PATH, "rb") as f:
+            return ts.context_from(f.read())
+    context = create_context()
+    with open(CONTEXT_PATH, "wb") as f:
+        f.write(context.serialize(save_secret_key=True))
+    return context
+
+
 def encrypt_array(context, array):
-    """Encrypts a numpy array (flattened) using CKKS."""
     flat = array.flatten().tolist()
-    encrypted = ts.ckks_vector(context, flat)
-    return encrypted
+    return ts.ckks_vector(context, flat)
 
 
 def decrypt_array(encrypted, original_shape):
-    """Decrypts back to a numpy array with the original shape."""
     decrypted_flat = np.array(encrypted.decrypt())
     return decrypted_flat.reshape(original_shape)
+
+
+def serialize_encrypted(enc_vector):
+    return np.frombuffer(enc_vector.serialize(), dtype=np.uint8)
+
+
+def deserialize_encrypted(context, byte_array):
+    return ts.ckks_vector_from(context, byte_array.tobytes())
