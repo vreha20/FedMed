@@ -3,6 +3,8 @@
   flex-wrap: wrap;
   gap: 1rem;
   justify-content: center;
+  align-items: center;
+  min-height: 120px;
 }
 
 .kpi-card {
@@ -12,6 +14,12 @@
   padding: 1rem;
   min-width: 120px;
   text-align: center;
+  transition: all 0.2s ease;
+}
+
+.kpi-card:hover {
+  background: rgba(255,255,255,0.12);
+  transform: translateY(-2px);
 }
 
 .kpi-card h3 {
@@ -26,8 +34,79 @@
   margin: 0;
 }
 
-.metrics-display.empty {
+/* Loading state */
+.metrics-display.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: 2rem;
   text-align: center;
-  opacity: 0.6;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255,255,255,0.1);
+  border-top: 4px solid #4caf50;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.loading-text {
+  color: rgba(255,255,255,0.7);
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Empty state */
+.metrics-display.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  opacity: 0.8;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty-text {
+  color: rgba(255,255,255,0.7);
+  font-size: 1.2rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.empty-subtext {
+  color: rgba(255,255,255,0.5);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* Error state (can be reused) */
+.metrics-display.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  background: rgba(255,0,0,0.1);
+  border: 1px solid rgba(255,0,0,0.2);
+  border-radius: 8px;
+}
+
+.metrics-display.error .empty-icon {
+  color: #f44336;
 }

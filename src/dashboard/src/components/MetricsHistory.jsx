@@ -2,9 +2,26 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import './MetricsHistory.css'
 
-const MetricsHistory = ({ history }) => {
+const MetricsHistory = ({ history, loading }) => {
+  // Loading state
+  if (loading) {
+    return (
+      <div className="metrics-history loading">
+        <div className="loading-spinner"></div>
+        <p className="loading-text">Loading training history...</p>
+      </div>
+    )
+  }
+
+  // Empty state (no data)
   if (!history || history.length === 0) {
-    return <div className="metrics-history empty">No history data</div>
+    return (
+      <div className="metrics-history empty">
+        <div className="empty-icon">📊</div>
+        <p className="empty-text">No training history available</p>
+        <p className="empty-subtext">Waiting for federated learning rounds to complete...</p>
+      </div>
+    )
   }
 
   // Prepare data for simple bar chart
@@ -70,7 +87,12 @@ MetricsHistory.propTypes = {
       accuracy: PropTypes.oneOfType([PropTypes.number, PropTypes.null]),
       timestamp: PropTypes.number.isRequired
     })
-  )
+  ),
+  loading: PropTypes.bool
+}
+
+MetricsHistory.defaultProps = {
+  loading: false
 }
 
 export default MetricsHistory;

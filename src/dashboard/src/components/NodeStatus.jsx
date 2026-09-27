@@ -2,7 +2,28 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import './NodeStatus.css'
 
-const NodeStatus = ({ latest }) => {
+const NodeStatus = ({ latest, loading }) => {
+  // Loading state
+  if (loading) {
+    return (
+      <div className="node-status loading">
+        <div className="loading-spinner"></div>
+        <p className="loading-text">Loading node status...</p>
+      </div>
+    )
+  }
+
+  // Empty state (no data)
+  if (!latest) {
+    return (
+      <div className="node-status empty">
+        <div className="empty-icon">🏥</div>
+        <p className="empty-text">No node data available</p>
+        <p className="empty-subtext">Waiting for federated learning to start...</p>
+      </div>
+    )
+  }
+
   const nodes = [
     { id: 1, name: 'Hospital 1' },
     { id: 2, name: 'Hospital 2' },
@@ -34,7 +55,12 @@ const NodeStatus = ({ latest }) => {
 NodeStatus.propTypes = {
   latest: PropTypes.shape({
     round: PropTypes.number
-  })
-};
+  }),
+  loading: PropTypes.bool
+}
+
+NodeStatus.defaultProps = {
+  loading: false
+}
 
 export default NodeStatus;

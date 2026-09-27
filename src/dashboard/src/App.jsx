@@ -3,7 +3,6 @@ import { fetchLatest, fetchHistory, fetchHealth } from './services/api'
 import MetricsDisplay from './components/MetricsDisplay'
 import MetricsHistory from './components/MetricsHistory'
 import NodeStatus from './components/NodeStatus'
-import RecentRoundsTable from './components/RecentRoundsTable'
 import './styles/App.css'
 
 function App() {
@@ -68,22 +67,17 @@ function App() {
 
       <main className="dashboard-content">
         <section className="kpi-cards">
-          <MetricsDisplay latest={latest} />
+          <MetricsDisplay latest={latest} loading={loading} />
         </section>
 
         <section className="node-status">
           <h2>Federation Nodes</h2>
-          <NodeStatus latest={latest} />
+          <NodeStatus latest={latest} loading={loading} />
         </section>
 
         <section className="visualization">
           <h2>Training Progress</h2>
-          <MetricsHistory history={history} />
-        </section>
-
-        <section className="recent-rounds">
-          <h2>Recent Rounds</h2>
-          <RecentRoundsTable history={history} />
+          <MetricsHistory history={history} loading={loading} />
         </section>
       </main>
 
