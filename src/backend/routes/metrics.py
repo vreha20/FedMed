@@ -92,3 +92,18 @@ def update_metrics(round_num: int, loss: float, accuracy: Optional[float] = None
 def get_client_metrics():
     """Return per-client metrics history."""
     return _metrics_store["client_metrics"]
+
+@router.get("/security")
+def get_security_status():
+    """Return the privacy and security capabilities implemented in FedMed."""
+    return {
+        "differential_privacy": {
+            "enabled": True,
+            "mechanism": "Gaussian noise",
+        },
+        "homomorphic_encryption": {
+            "enabled": True,
+            "scheme": "CKKS",
+            "library": "TenSEAL",
+        },
+    }
