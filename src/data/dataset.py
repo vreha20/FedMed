@@ -37,7 +37,7 @@ def group_slices_by_volume(data_dir):
 
 
 class BraTSVolumeDataset(Dataset):
-    def __init__(self, data_dir, volume_ids, target_size=(64, 128, 128)):
+    def __init__(self, data_dir, volume_ids, target_size=(64, 64, 64)):
         self.data_dir = data_dir
         self.volume_ids = volume_ids
         self.target_size = target_size
