@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react'
-import { fetchLatest, fetchHistory, fetchHealth, fetchClientMetrics } from './services/api'
+import {
+  fetchLatest,
+  fetchHistory,
+  fetchHealth,
+  fetchClientMetrics
+} from './services/api'
+
 import MetricsDisplay from './components/MetricsDisplay'
 import MetricsHistory from './components/MetricsHistory'
 import NodeStatus from './components/NodeStatus'
+
 import './styles/App.css'
 
 function App() {
@@ -16,13 +23,20 @@ function App() {
   const fetchData = async () => {
     setLoading(true)
     setError(null)
+
     try {
-      const [latestRes, historyRes, healthRes, clientMetricsRes] = await Promise.all([
+      const [
+        latestRes,
+        historyRes,
+        healthRes,
+        clientMetricsRes
+      ] = await Promise.all([
         fetchLatest(),
         fetchHistory(),
         fetchHealth(),
         fetchClientMetrics()
       ])
+
       setLatest(latestRes)
       setHistory(historyRes)
       setHealth(healthRes)
@@ -37,56 +51,209 @@ function App() {
 
   useEffect(() => {
     fetchData()
-    const interval = setInterval(fetchData, 5000) // poll every 5 seconds
+
+    const interval = setInterval(fetchData, 5000)
+
     return () => clearInterval(interval)
   }, [])
 
-  if (loading && latest === null && history.length === 0 && clientMetrics === null) {
-    return <div className="container">Loading dashboard data...</div>
+  if (
+    loading &&
+    latest === null &&
+    history.length === 0 &&
+    clientMetrics === null
+  ) {
+    return (
+      <div className="container">
+        <div className="loading-state">
+          <div className="loading-spinner" />
+          <h2>Loading FedMed</h2>
+          <p>Connecting to federated learning services...</p>
+        </div>
+      </div>
+    )
   }
 
   if (error) {
     return (
-      <div className="container error">
-        <h2>Error loading data</h2>
-        <p>{error}</p>
-        <button onClick={fetchData}>Retry</button>
+      <div className="container">
+        <div className="error">
+          <div className="error-icon">!</div>
+
+          <h2>Unable to load dashboard</h2>
+
+          <p>{error}</p>
+
+          <button onClick={fetchData}>
+            Retry Connection
+          </button>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="container">
+
+      {/* ==================== HEADER ==================== */}
+
       <header className="app-header">
-        <h1>FedMed Federated Learning Dashboard</h1>
-        <div className="status-indicator">
-          {health ? (
-            <span className="status status-ok">Server: Online</span>
-          ) : (
-            <span className="status status-offline">Server: Offline</span>
-          )}
+
+        <div className="brand-section">
+
+          <div className="brand-mark">
+            FM
+          </div>
+
+          <div className="brand-content">
+
+            <h1>FedMed</h1>
+
+            <p className="subtitle">
+              Federated Healthcare Intelligence
+            </p>
+
+          </div>
+
         </div>
+
+        <div className="header-status">
+
+          <span
+            className={`status-dot ${
+              health ? 'online' : 'offline'
+            }`}
+          />
+
+          <div className="status-content">
+
+            <span className="status-label">
+              {health ? 'System Online' : 'System Offline'}
+            </span>
+
+            <span className="status-description">
+              {health
+                ? 'Federation services operational'
+                : 'Unable to reach server'}
+            </span>
+
+          </div>
+
+        </div>
+
       </header>
 
+
+      {/* ==================== DASHBOARD ==================== */}
+
       <main className="dashboard-content">
+
+        {/* KPI SECTION */}
+
         <section className="kpi-cards">
-          <MetricsDisplay latest={latest} loading={loading} />
+
+          <div className="section-heading">
+
+            <div>
+              <h2>Federation Overview</h2>
+
+              <p>
+                Real-time global model performance
+              </p>
+            </div>
+
+          </div>
+
+          <MetricsDisplay
+            latest={latest}
+            loading={loading}
+          />
+
         </section>
+
+
+        {/* NODE STATUS */}
 
         <section className="node-status">
-          <h2>Federation Nodes</h2>
-          <NodeStatus latest={latest} clientMetrics={clientMetrics} loading={loading} />
+
+          <div className="section-heading">
+
+            <div>
+              <h2>Federation Nodes</h2>
+
+              <p>
+                Connected healthcare training nodes
+              </p>
+            </div>
+
+            <span className="live-badge">
+              LIVE
+            </span>
+
+          </div>
+
+          <NodeStatus
+            latest={latest}
+            clientMetrics={clientMetrics}
+            loading={loading}
+          />
+
         </section>
+
+
+        {/* TRAINING PROGRESS */}
 
         <section className="visualization">
-          <h2>Training Progress</h2>
-          <MetricsHistory history={history} loading={loading} />
+
+          <div className="section-heading">
+
+            <div>
+              <h2>Training Progress</h2>
+
+              <p>
+                Global model convergence across
+                federated rounds
+              </p>
+            </div>
+
+          </div>
+
+          <MetricsHistory
+            history={history}
+            loading={loading}
+          />
+
         </section>
+
       </main>
 
+
+      {/* ==================== FOOTER ==================== */}
+
       <footer className="app-footer">
-        <p>FedMed &copy; {new Date().getFullYear()} | Federated Learning Engine</p>
+
+        <span>
+          FedMed
+        </span>
+
+        <span className="footer-divider">
+          •
+        </span>
+
+        <span>
+          Privacy-Preserving Federated Learning
+        </span>
+
+        <span className="footer-divider">
+          •
+        </span>
+
+        <span>
+          © {new Date().getFullYear()}
+        </span>
+
       </footer>
+
     </div>
   )
 }
