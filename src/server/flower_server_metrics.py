@@ -11,7 +11,7 @@ from pathlib import Path
 
 def load_config() -> dict:
     """Duplicate of the Week‑1 loader – keeps this file independent."""
-    config_path = Path(__file__).parents[1] / "configs" / "config.yaml"
+    config_path = Path(__file__).resolve().parents[2] / "configs" / "config.yaml"
     with config_path.open("r") as f:
         return yaml.safe_load(f)
 
