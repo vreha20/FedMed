@@ -138,6 +138,7 @@ def update_metrics(
 
 @router.get("/metrics/clients", response_model=Dict[str, List[ClientMetricsResponse]])
 def get_client_metrics():
+
     with _connect() as connection:
         rows = connection.execute(
             """SELECT client_id, round, dice, examples, timestamp
@@ -154,6 +155,22 @@ def get_client_metrics():
             )
         )
     return result
+
+
+@router.get("/security")
+def get_security_status():
+    """Return the privacy and security capabilities implemented in FedMed."""
+    return {
+        "differential_privacy": {
+            "enabled": True,
+            "mechanism": "Gaussian noise",
+        },
+        "homomorphic_encryption": {
+            "enabled": True,
+            "scheme": "CKKS",
+            "library": "TenSEAL",
+        },
+    }
 
 
 _initialize()

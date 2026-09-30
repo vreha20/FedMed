@@ -42,3 +42,13 @@ export const fetchHealth = async () => {
     throw err
   }
 }
+
+export const fetchSecurity = async () => {
+  try {
+    const response = await fetch(`${API_BASE}/api/security`)
+    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    return await response.json()
+  } catch (err) {
+    throw err
+  }
+}
