@@ -3,12 +3,14 @@ import {
   fetchLatest,
   fetchHistory,
   fetchHealth,
-  fetchClientMetrics
+  fetchClientMetrics,
+  fetchSecurity
 } from './services/api'
 
 import MetricsDisplay from './components/MetricsDisplay'
 import MetricsHistory from './components/MetricsHistory'
 import NodeStatus from './components/NodeStatus'
+import SecurityPanel from './components/SecurityPanel'
 
 import './styles/App.css'
 
@@ -17,11 +19,14 @@ function App() {
   const [history, setHistory] = useState([])
   const [health, setHealth] = useState(null)
   const [clientMetrics, setClientMetrics] = useState(null)
+  const [security, setSecurity] = useState(null)
+  const [securityLoading, setSecurityLoading] = useState(true)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   const fetchData = async () => {
     setLoading(true)
+    setSecurityLoading(true)
     setError(null)
 
     try {
@@ -29,23 +34,27 @@ function App() {
         latestRes,
         historyRes,
         healthRes,
-        clientMetricsRes
+        clientMetricsRes,
+        securityRes
       ] = await Promise.all([
         fetchLatest(),
         fetchHistory(),
         fetchHealth(),
-        fetchClientMetrics()
+        fetchClientMetrics(),
+        fetchSecurity()
       ])
 
       setLatest(latestRes)
       setHistory(historyRes)
       setHealth(healthRes)
       setClientMetrics(clientMetricsRes)
+      setSecurity(securityRes)
     } catch (err) {
       setError(err.message || 'Unknown error')
-      console.error('Failed to fetch metrics:', err)
+      console.error('Failed to fetch dashboard data:', err)
     } finally {
       setLoading(false)
+      setSecurityLoading(false)
     }
   }
 
@@ -67,8 +76,12 @@ function App() {
       <div className="container">
         <div className="loading-state">
           <div className="loading-spinner" />
+
           <h2>Loading FedMed</h2>
-          <p>Connecting to federated learning services...</p>
+
+          <p>
+            Connecting to federated learning services...
+          </p>
         </div>
       </div>
     )
@@ -78,15 +91,23 @@ function App() {
     return (
       <div className="container">
         <div className="error">
-          <div className="error-icon">!</div>
 
-          <h2>Unable to load dashboard</h2>
+          <div className="error-icon">
+            !
+          </div>
 
-          <p>{error}</p>
+          <h2>
+            Unable to load dashboard
+          </h2>
+
+          <p>
+            {error}
+          </p>
 
           <button onClick={fetchData}>
             Retry Connection
           </button>
+
         </div>
       </div>
     )
@@ -107,7 +128,9 @@ function App() {
 
           <div className="brand-content">
 
-            <h1>FedMed</h1>
+            <h1>
+              FedMed
+            </h1>
 
             <p className="subtitle">
               Federated Healthcare Intelligence
@@ -128,7 +151,9 @@ function App() {
           <div className="status-content">
 
             <span className="status-label">
-              {health ? 'System Online' : 'System Offline'}
+              {health
+                ? 'System Online'
+                : 'System Offline'}
             </span>
 
             <span className="status-description">
@@ -155,11 +180,15 @@ function App() {
           <div className="section-heading">
 
             <div>
-              <h2>Federation Overview</h2>
+
+              <h2>
+                Federation Overview
+              </h2>
 
               <p>
                 Real-time global model performance
               </p>
+
             </div>
 
           </div>
@@ -179,11 +208,15 @@ function App() {
           <div className="section-heading">
 
             <div>
-              <h2>Federation Nodes</h2>
+
+              <h2>
+                Federation Nodes
+              </h2>
 
               <p>
                 Connected healthcare training nodes
               </p>
+
             </div>
 
             <span className="live-badge">
@@ -208,12 +241,16 @@ function App() {
           <div className="section-heading">
 
             <div>
-              <h2>Training Progress</h2>
+
+              <h2>
+                Training Progress
+              </h2>
 
               <p>
                 Global model convergence across
                 federated rounds
               </p>
+
             </div>
 
           </div>
@@ -224,6 +261,14 @@ function App() {
           />
 
         </section>
+
+
+        {/* PRIVACY & SECURITY */}
+
+        <SecurityPanel
+          security={security}
+          loading={securityLoading}
+        />
 
       </main>
 
