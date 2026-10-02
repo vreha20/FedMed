@@ -25,7 +25,7 @@ const MetricsDisplay = ({ latest, loading }) => {
   }
 
   // Data available
-  const { round, loss, accuracy, timestamp } = latest
+  const { round, loss, dice, timestamp } = latest
   const date = timestamp ? new Date(timestamp * 1000).toLocaleTimeString() : 'N/A'
 
   return (
@@ -41,7 +41,7 @@ const MetricsDisplay = ({ latest, loading }) => {
       <div className="kpi-card">
         <h3>Dice Score</h3>
         <p className="value">
-          {accuracy !== null ? accuracy.toFixed(4) : 'N/A'}
+          {dice !== null ? dice.toFixed(4) : 'N/A'}
         </p>
       </div>
       <div className="kpi-card">
@@ -56,7 +56,7 @@ MetricsDisplay.propTypes = {
   latest: PropTypes.shape({
     round: PropTypes.number,
     loss: PropTypes.number,
-    accuracy: PropTypes.oneOfType([PropTypes.number, PropTypes.null]),
+    dice: PropTypes.oneOfType([PropTypes.number, PropTypes.null]),
     timestamp: PropTypes.number
   }),
   loading: PropTypes.bool

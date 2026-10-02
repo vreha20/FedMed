@@ -18,7 +18,7 @@ const RecentRoundsTable = ({ history }) => {
           <tr>
             <th>Round</th>
             <th>Loss</th>
-            <th>Accuracy</th>
+            <th>Dice Score</th>
             <th>Timestamp</th>
           </tr>
         </thead>
@@ -27,7 +27,7 @@ const RecentRoundsTable = ({ history }) => {
             <tr key={h.round}>
               <td>{h.round}</td>
               <td>{h.loss.toFixed(4)}</td>
-              <td>{h.accuracy !== null ? h.accuracy.toFixed(4) : 'N/A'}</td>
+              <td>{h.dice !== null ? h.dice.toFixed(4) : 'N/A'}</td>
               <td>{new Date(h.timestamp * 1000).toLocaleTimeString()}</td>
             </tr>
           ))}
@@ -42,7 +42,7 @@ RecentRoundsTable.propTypes = {
     PropTypes.shape({
       round: PropTypes.number.isRequired,
       loss: PropTypes.number.isRequired,
-      accuracy: PropTypes.oneOfType([PropTypes.number, PropTypes.null]),
+      dice: PropTypes.oneOfType([PropTypes.number, PropTypes.null]),
       timestamp: PropTypes.number.isRequired
     })
   )

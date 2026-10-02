@@ -26,10 +26,10 @@ const MetricsHistory = ({ history, loading }) => {
 
   // Prepare data for simple bar chart
   const lossData = history.map(h => h.loss)
-  const accData = history.map(h => h.accuracy !== null ? h.accuracy : 0)
+  const diceData = history.map(h => h.dice !== null ? h.dice : 0)
 
   const maxLoss = Math.max(...lossData) || 1
-  const maxAcc = Math.max(...accData) || 1
+  const maxDice = Math.max(...diceData) || 1
 
   return (
     <div className="metrics-history">
@@ -38,13 +38,13 @@ const MetricsHistory = ({ history, loading }) => {
         <div className="chart">
           {history.map((h) => {
             const lossPct = (h.loss / maxLoss) * 100
-            const accPct = (h.accuracy !== null ? (h.accuracy / maxAcc) * 100 : 0)
+            const dicePct = (h.dice !== null ? (h.dice / maxDice) * 100 : 0)
             const lossPctStr = lossPct + '%'
-            const accPctStr = accPct + '%'
+            const dicePctStr = dicePct + '%'
             return (
               <div key={h.round} className="chart-group">
                 <div className="chart-bar loss" style={{ height: lossPctStr }} title={'Loss: ' + h.loss.toFixed(4)} />
-                <div className="chart-bar acc" style={{ height: accPctStr }} title={'Dice Score: ' + (h.accuracy !== null ? h.accuracy.toFixed(4) : 'N/A')} />
+                <div className="chart-bar acc" style={{ height: dicePctStr }} title={'Dice Score: ' + (h.dice !== null ? h.dice.toFixed(4) : 'N/A')} />
                 <div className="chart-label">R{h.round}</div>
               </div>
             )
@@ -68,7 +68,7 @@ const MetricsHistory = ({ history, loading }) => {
               <tr key={h.round}>
                 <td>{h.round}</td>
                 <td>{h.loss.toFixed(4)}</td>
-                <td>{h.accuracy !== null ? h.accuracy.toFixed(4) : 'N/A'}</td>
+                <td>{h.dice !== null ? h.dice.toFixed(4) : 'N/A'}</td>
                 <td>{new Date(h.timestamp * 1000).toLocaleTimeString()}</td>
               </tr>
             ))}
@@ -84,7 +84,7 @@ MetricsHistory.propTypes = {
     PropTypes.shape({
       round: PropTypes.number.isRequired,
       loss: PropTypes.number.isRequired,
-      accuracy: PropTypes.oneOfType([PropTypes.number, PropTypes.null]),
+      dice: PropTypes.oneOfType([PropTypes.number, PropTypes.null]),
       timestamp: PropTypes.number.isRequired
     })
   ),
