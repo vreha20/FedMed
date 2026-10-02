@@ -160,15 +160,44 @@ def get_client_metrics():
 @router.get("/security")
 def get_security_status():
     """Return the privacy and security capabilities implemented in FedMed."""
+    # Check TenSEAL availability
+    tenseal_available = False
+    try:
+        from src.privacy.encryption import is_tenseal_available
+        tenseal_available = is_tenseal_available()
+    except ImportError:
+        tenseal_available = False
+
+    # Determine if encryption is enabled based on config and availability
+    encryption_enabled = False
+    encryption_scheme = None
+    encryption_library = None
+    try:
+        from src.utils.data_path import find_dataset_path
+        import yaml
+        config_path = "configs/config.yaml"
+        with open(config_path, "r") as f:
+            config = yaml.safe_load(f)
+        encryption_method = config.get("privacy", {}).get("encryption", "tenseal")
+        if encryption_method == "tenseal" and tenseal_available:
+            encryption_enabled = True
+            encryption_scheme = "CKKS"
+            encryption_library = "TenSEAL"
+    except Exception:
+        # If we can't read the config, default to not enabled
+        pass
+
     return {
         "differential_privacy": {
             "enabled": True,
-            "mechanism": "Gaussian noise",
+            "mechanism": "Gaussian noise applied to model updates",
+            "note": "This is not formally validated differential privacy without privacy accountant.",
         },
         "homomorphic_encryption": {
-            "enabled": True,
-            "scheme": "CKKS",
-            "library": "TenSEAL",
+            "enabled": encryption_enabled,
+            "scheme": encryption_scheme,
+            "library": encryption_library,
+            "note": "Homomorphic encryption is demonstrated by encrypting and decrypting the final layer locally. Cross-process encrypted aggregation is not implemented due to protobuf compatibility issues.",
         },
     }
 

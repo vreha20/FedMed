@@ -4,6 +4,15 @@
   padding: 2rem;
 }
 
+/* Main dashboard container */
+.dashboard-content {
+  max-width: 1400px;
+  width: calc(100% - 48px);
+  margin: 0 auto;
+  padding: 0 24px;
+  box-sizing: border-box;
+}
+
 .app-header {
   display: flex;
   justify-content: space-between;
@@ -44,26 +53,59 @@
   color: #f44336;
 }
 
-.dashboard-content {
+/* Section styles */
+.section-header {
+  margin-bottom: 1.5rem;
+}
+
+.section-header h2,
+.section-header h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.section-header p {
+  margin: 0;
+  font-size: 1rem;
+  color: #94a3b8;
+}
+
+/* KPI section - 4 equal cards */
+.kpi-section {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+/* Federation Nodes - full width */
+.nodes-section {
+  margin-bottom: 2rem;
+}
+
+/* Training charts - 2 equal panels */
+.charts-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 2rem;
+  margin-bottom: 2rem;
 }
 
-.kpi-cards {
-  grid-column: 1 / -1;
+/* Recent rounds table - full width */
+.table-section {
+  margin-bottom: 2rem;
 }
 
-.node-status {
-  grid-column: 1 / -1;
+/* Security panel - full width or balanced */
+.security-section {
+  margin-bottom: 2rem;
 }
 
-.visualization {
-  grid-column: 1 / -1;
-}
-
-.recent-rounds {
-  grid-column: 1 / -1;
+/* Architecture section - full width */
+.architecture-section {
+  margin-bottom: 2rem;
 }
 
 .app-footer {
@@ -98,7 +140,12 @@
     border-radius: 8px;
     padding: 1rem;
   }
-  .kpi-cards, .node-status, .visualization, .recent-rounds {
+  .kpi-section,
+  .nodes-section,
+  .charts-section,
+  .table-section,
+  .security-section,
+  .architecture-section {
     background: rgba(255,255,255,0.03);
     border-radius: 8px;
     padding: 1.5rem;

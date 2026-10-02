@@ -41,6 +41,15 @@ class MetricsFedAvg(FedAvg):
 
             loss = float(metrics_agg.get("loss", 0.0)) if metrics_agg else 0.0
 
+            # Normalize Flower's FitRes to (num_examples, metrics) for update_metrics
+            client_eval_results = [
+                (
+                    result.num_examples,
+                    {**result.metrics, "cid": result.metrics.get("cid", client.cid)},
+                )
+                for client, result in results
+            ] if results else []
+
             # For fit, we might not have metrics, but if we do, forward them
             # Note: In this implementation, fit doesn't typically produce metrics,
             # but we check just in case
@@ -54,21 +63,21 @@ class MetricsFedAvg(FedAvg):
                         round_num=rnd,
                         loss=loss,
                         dice=dice,
-                        client_eval_results=results,  # Pass raw client results for per-client storage
+                        client_eval_results=client_eval_results,
                     )
                 else:
                     # Still update with loss even if no dice metric
                     update_metrics(
                         round_num=rnd,
                         loss=loss,
-                        client_eval_results=results,
+                        client_eval_results=client_eval_results,
                     )
             else:
                 # Update with just loss if no metrics
                 update_metrics(
                     round_num=rnd,
                     loss=loss,
-                    client_eval_results=results,
+                    client_eval_results=client_eval_results,
                 )
 
         return aggregated_result

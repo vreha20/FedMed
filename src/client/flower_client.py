@@ -31,7 +31,6 @@ class HospitalClient(fl.client.NumPyClient):
         self.dataset = BraTSVolumeDataset(
             data_dir, volume_ids, target_size=target_size
         )
-        self.loader = DataLoader(self.dataset, batch_size=1, shuffle=True)
         self.loss_fn = DiceLoss(sigmoid=True)
         self.dice_metric = DiceMetric(include_background=True, reduction="mean")
 
@@ -40,14 +39,22 @@ class HospitalClient(fl.client.NumPyClient):
 
     def fit(self, parameters, config):
         set_model_params(self.model, parameters)
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
-        self.model.train()
+        # Get learning rate and batch size from config, with defaults
+        learning_rate = config.get("learning_rate", 1e-3)
+        batch_size = config.get("batch_size", 1)
         local_epochs = config.get("local_epochs", 1)
+        dp_noise_multiplier = config.get("dp_noise_multiplier", 1.0)
+
+        # Create DataLoader with the specified batch size
+        loader = DataLoader(self.dataset, batch_size=batch_size, shuffle=True)
+
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
+        self.model.train()
         for _ in range(local_epochs):
-            for batch_idx, (images, masks) in enumerate(self.loader, start=1):
+            for batch_idx, (images, masks) in enumerate(loader, start=1):
                 print(
                     f"[client {self.cid}] training volume "
-                    f"{batch_idx}/{len(self.loader)}",
+                    f"{batch_idx}/{len(loader)}",
                     flush=True,
                 )
                 images, masks = images.to(self.device), masks.to(self.device)
@@ -56,37 +63,52 @@ class HospitalClient(fl.client.NumPyClient):
                 loss = self.loss_fn(outputs, masks)
                 loss.backward()
                 optimizer.step()
-        noisy_params = add_dp_noise(get_model_params(self.model), noise_multiplier=config.get("dp_noise_multiplier", 1.0))
+        noisy_params = add_dp_noise(get_model_params(self.model), noise_multiplier=dp_noise_multiplier)
         print(f"[client {self.cid}] training complete; returning update", flush=True)
 
-        # Encrypt the final layer (weight + bias) with TenSEAL, then decrypt
-        # (demonstrates the crypto pipeline; true cross-process handoff blocked
-        # by a protobuf version conflict between TenSEAL and Flower/Ray)
-        context = create_context()
-        final_weight_shape = noisy_params[61].shape
-        final_bias_shape = noisy_params[62].shape
-        enc_weight = encrypt_array(context, noisy_params[61])
-        enc_bias = encrypt_array(context, noisy_params[62])
-        dec_weight = decrypt_array(enc_weight, final_weight_shape)
-        dec_bias = decrypt_array(enc_bias, final_bias_shape)
-        noisy_params[61] = dec_weight.astype(noisy_params[61].dtype)
-        noisy_params[62] = dec_bias.astype(noisy_params[62].dtype)
+        # Optionally encrypt the final layer (weight + bias) with TenSEAL, then decrypt
+        # This is a demonstration of the crypto pipeline; true cross-process handoff is not implemented.
+        encryption_method = config.get("privacy", {}).get("encryption", "tenseal")
+        if encryption_method == "tenseal":
+            try:
+                from src.privacy.encryption import create_context, encrypt_array, decrypt_array, is_tenseal_available
+                if is_tenseal_available():
+                    context = create_context()
+                    final_weight_shape = noisy_params[61].shape
+                    final_bias_shape = noisy_params[62].shape
+                    enc_weight = encrypt_array(context, noisy_params[61])
+                    enc_bias = encrypt_array(context, noisy_params[62])
+                    dec_weight = decrypt_array(enc_weight, final_weight_shape)
+                    dec_bias = decrypt_array(enc_bias, final_bias_shape)
+                    noisy_params[61] = dec_weight.astype(noisy_params[61].dtype)
+                    noisy_params[62] = dec_bias.astype(noisy_params[62].dtype)
+                else:
+                    print(f"[client {self.cid}] TenSEAL not available, skipping encryption demo", flush=True)
+            except ImportError:
+                print(f"[client {self.cid}] TenSEAL not available, skipping encryption demo", flush=True)
+        else:
+            print(f"[client {self.cid}] Encryption method {encryption_method} not implemented, skipping encryption demo", flush=True)
 
         return noisy_params, len(self.dataset), {"cid": self.cid}
 
     def evaluate(self, parameters, config):
         set_model_params(self.model, parameters)
+        # Get batch size from config, with default
+        batch_size = config.get("batch_size", 1)
+        # Create DataLoader with the specified batch size
+        loader = DataLoader(self.dataset, batch_size=batch_size, shuffle=False)
+
         self.model.eval()
         total_loss = 0
         self.dice_metric.reset()
         with torch.no_grad():
-            for images, masks in self.loader:
+            for images, masks in loader:
                 images, masks = images.to(self.device), masks.to(self.device)
                 outputs = self.model(images)
                 loss = self.loss_fn(outputs, masks)
                 total_loss += loss.item()
                 preds = torch.sigmoid(outputs) > 0.5
                 self.dice_metric(y_pred=preds, y=masks)
-        avg_loss = total_loss / len(self.loader)
+        avg_loss = total_loss / len(loader)
         dice_score = self.dice_metric.aggregate().item()
         return avg_loss, len(self.dataset), {"cid": self.cid, "dice": dice_score}

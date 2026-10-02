@@ -41,11 +41,14 @@ def weighted_dice_average(metrics):
 def run_simulation(data_dir, config_path="configs/config.yaml"):
     cfg = load_config(config_path)
     fed_cfg = cfg["federated"]
+    train_cfg = cfg["training"]
 
     num_clients = fed_cfg["num_clients"]
     num_rounds = fed_cfg["rounds"]
     local_epochs = fed_cfg["local_epochs"]
     dp_noise_multiplier = cfg["privacy"]["dp_noise_multiplier"]
+    learning_rate = train_cfg["learning_rate"]
+    batch_size = train_cfg["batch_size"]
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     groups = group_slices_by_volume(data_dir)
@@ -63,14 +66,20 @@ def run_simulation(data_dir, config_path="configs/config.yaml"):
 
     client_fn = make_client_fn(data_dir, shards, device)
 
-    strategy = fl.server.strategy.FedAvg(
+    from src.server.metrics_strategy import MetricsFedAvg
+    strategy = MetricsFedAvg(
         fraction_fit=1.0,
         fraction_evaluate=1.0,
         min_fit_clients=num_clients,
         min_evaluate_clients=num_clients,
         min_available_clients=num_clients,
         evaluate_metrics_aggregation_fn=weighted_dice_average,
-        on_fit_config_fn=lambda rnd: {"local_epochs": local_epochs, "dp_noise_multiplier": dp_noise_multiplier},
+        on_fit_config_fn=lambda rnd: {
+            "local_epochs": local_epochs,
+            "dp_noise_multiplier": dp_noise_multiplier,
+            "learning_rate": learning_rate,
+            "batch_size": batch_size
+        },
     )
 
     history = start_simulation(

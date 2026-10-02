@@ -1,306 +1,156 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import {
   fetchLatest,
   fetchHistory,
-  fetchHealth,
   fetchClientMetrics,
-  fetchSecurity
-} from './services/api'
+  fetchSecurity,
+  fetchHealth
+} from './services/api';
 
-import MetricsDisplay from './components/MetricsDisplay'
-import MetricsHistory from './components/MetricsHistory'
-import NodeStatus from './components/NodeStatus'
-import SecurityPanel from './components/SecurityPanel'
+import Header from './components/Header';
+import KPISection from './components/KPISection';
+import FederationNodes from './components/FederationNodes';
+import TrainingCharts from './components/TrainingCharts';
+import RecentRoundsTable from './components/RecentRoundsTable';
+import SecurityPanel from './components/SecurityPanel';
+import SystemArchitecture from './components/SystemArchitecture';
 
-import './styles/App.css'
+import './styles/App.css';
 
 function App() {
-  const [latest, setLatest] = useState(null)
-  const [history, setHistory] = useState([])
-  const [health, setHealth] = useState(null)
-  const [clientMetrics, setClientMetrics] = useState(null)
-  const [security, setSecurity] = useState(null)
-  const [securityLoading, setSecurityLoading] = useState(true)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [latest, setLatest] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [clientMetrics, setClientMetrics] = useState(null);
+  const [security, setSecurity] = useState(null);
+  const [health, setHealth] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const fetchData = async () => {
-    setLoading(true)
-    setSecurityLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
     try {
-      // Use real data from APIs
       const [
         latestRes,
         historyRes,
-        healthRes,
         clientMetricsRes,
-        securityRes
+        securityRes,
+        healthRes
       ] = await Promise.all([
         fetchLatest(),
         fetchHistory(),
-        fetchHealth(),
         fetchClientMetrics(),
-        fetchSecurity()
-      ])
+        fetchSecurity(),
+        fetchHealth()
+      ]);
 
-      setLatest(latestRes)
-      setHistory(historyRes)
-      setHealth(healthRes)
-      setClientMetrics(clientMetricsRes)
-      setSecurity(securityRes)
+      setLatest(latestRes);
+      setHistory(historyRes);
+      setClientMetrics(clientMetricsRes);
+      setSecurity(securityRes);
+      setHealth(healthRes);
     } catch (err) {
-      setError(err.message || 'Unknown error')
-      console.error('Failed to fetch dashboard data:', err)
+      setError(err.message || 'Unknown error');
+      console.error('Failed to fetch dashboard data:', err);
     } finally {
-      setLoading(false)
-      setSecurityLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchData()
+    fetchData();
 
-    const interval = setInterval(fetchData, 5000)
+    const interval = setInterval(fetchData, 5000);
 
-    return () => clearInterval(interval)
-  }, [])
+    return () => clearInterval(interval);
+  }, []);
 
-  if (
-    loading &&
-    latest === null &&
-    history.length === 0 &&
-    clientMetrics === null
-  ) {
+  if (loading && !latest && history.length === 0 && !clientMetrics) {
     return (
-      <div className="container">
+      <div className="app-container">
         <div className="loading-state">
           <div className="loading-spinner" />
-
           <h2>Loading FedMed</h2>
-
-          <p>
-            Connecting to federated learning services...
-          </p>
+          <p>Connecting to federated learning services...</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (error) {
     return (
-      <div className="container">
-        <div className="error">
-
-          <div className="error-icon">
-            !
-          </div>
-
-          <h2>
-            Unable to load dashboard
-          </h2>
-
-          <p>
-            {error}
-          </p>
-
-          <button onClick={fetchData}>
-            Retry Connection
-          </button>
-
+      <div className="app-container">
+        <div className="error-state">
+          <div className="error-icon">!</div>
+          <h2>Unable to load dashboard</h2>
+          <p>{error}</p>
+          <button onClick={fetchData}>Retry Connection</button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="container">
-
-      {/* ==================== HEADER ==================== */}
-
-      <header className="app-header">
-
-        <div className="brand-section">
-
-          <div className="brand-mark">
-            FM
-          </div>
-
-          <div className="brand-content">
-
-            <h1>
-              FedMed
-            </h1>
-
-            <p className="subtitle">
-              Federated Healthcare Intelligence
-            </p>
-
-          </div>
-
-        </div>
-
-        <div className="header-status">
-
-          <span
-            className={`status-dot ${
-              health ? 'online' : 'offline'
-            }`}
-          />
-
-          <div className="status-content">
-
-            <span className="status-label">
-              {health
-                ? 'System Online'
-                : 'System Offline'}
-            </span>
-
-            <span className="status-description">
-              {health
-                ? 'Federation services operational'
-                : 'Unable to reach server'}
-            </span>
-
-          </div>
-
-        </div>
-
-      </header>
-
-
-      {/* ==================== DASHBOARD ==================== */}
-
+    <div className="app-container">
+      <Header
+        latest={latest}
+        history={history}
+        clientMetrics={clientMetrics}
+        health={health}
+      />
       <main className="dashboard-content">
-
-        {/* KPI SECTION */}
-
-        <section className="kpi-cards">
-
-          <div className="section-heading">
-
-            <div>
-
-              <h2>
-                Federation Overview
-              </h2>
-
-              <p>
-                Real-time global model performance
-              </p>
-
-            </div>
-
-          </div>
-
-          <MetricsDisplay
+        <section className="kpi-section">
+          <KPISection
             latest={latest}
-            loading={loading}
-          />
-
-        </section>
-
-
-        {/* NODE STATUS */}
-
-        <section className="node-status">
-
-          <div className="section-heading">
-
-            <div>
-
-              <h2>
-                Federation Nodes
-              </h2>
-
-              <p>
-                Connected healthcare training nodes
-              </p>
-
-            </div>
-
-            <span className="live-badge">
-              LIVE
-            </span>
-
-          </div>
-
-          <NodeStatus
-            latest={latest}
-            clientMetrics={clientMetrics}
-            loading={loading}
-          />
-
-        </section>
-
-
-        {/* TRAINING PROGRESS */}
-
-        <section className="visualization">
-
-          <div className="section-heading">
-
-            <div>
-
-              <h2>
-                Training Progress
-              </h2>
-
-              <p>
-                Global model convergence across federated rounds
-              </p>
-
-            </div>
-
-          </div>
-
-          <MetricsHistory
             history={history}
-            loading={loading}
+            clientMetrics={clientMetrics}
           />
-
         </section>
 
+        <section className="nodes-section">
+          <FederationNodes
+            clientMetrics={clientMetrics}
+          />
+        </section>
 
-        {/* PRIVACY & SECURITY */}
+        <section className="charts-section">
+          <TrainingCharts
+            history={history}
+          />
+        </section>
 
-        <SecurityPanel
-          security={security}
-          loading={securityLoading}
-        />
+        <section className="table-section">
+          <RecentRoundsTable
+            history={history}
+          />
+        </section>
 
+        <section className="security-section">
+          <SecurityPanel
+            security={security}
+          />
+        </section>
+
+        <section className="architecture-section">
+          <SystemArchitecture />
+        </section>
       </main>
-
-
-      {/* ==================== FOOTER ==================== */}
-
       <footer className="app-footer">
-
         <span>
           FedMed
         </span>
-
-        <span className="footer-divider">
-          •
-        </span>
-
+        <span className="footer-divider">•</span>
         <span>
           Privacy-Preserving Federated Learning
         </span>
-
-        <span className="footer-divider">
-          •
-        </span>
-
+        <span className="footer-divider">•</span>
         <span>
           © {new Date().getFullYear()}
         </span>
-
       </footer>
-
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
