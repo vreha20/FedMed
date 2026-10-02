@@ -21,7 +21,7 @@ _metrics_store = {
 class MetricsResponse(BaseModel):
     round: int
     loss: float
-    accuracy: Optional[float] = None
+    dice: Optional[float] = None
     timestamp: float
 
 
@@ -53,13 +53,13 @@ def get_metrics_history():
 
 
 # Helper function to be called from elsewhere (e.g., Flower strategy callback)
-def update_metrics(round_num: int, loss: float, accuracy: Optional[float] = None,
+def update_metrics(round_num: int, loss: float, dice: Optional[float] = None,
                    client_eval_results: Optional[List[tuple]] = None):
     """Update the in‑memory metrics store."""
     metrics = MetricsResponse(
         round=round_num,
         loss=loss,
-        accuracy=accuracy,
+        dice=dice,
         timestamp=time.time(),
     )
     _metrics_store["latest"] = metrics
