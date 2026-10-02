@@ -88,11 +88,22 @@ class MetricsFedAvg(FedAvg):
             if dice is not None:
                 dice = float(dice)
 
+            # Flower's aggregate_evaluate receives (ClientProxy, EvaluateRes)
+            # pairs, while the metrics store expects (num_examples, metrics)
+            # pairs. Normalize the current Flower response shape here.
+            client_eval_results = [
+                (
+                    result.num_examples,
+                    {**result.metrics, "cid": result.metrics.get("cid", client.cid)},
+                )
+                for client, result in results
+            ]
+
             update_metrics(
                 round_num=rnd,
                 loss=loss,
                 dice=dice,
-                client_eval_results=results,  # Pass raw client results for per-client storage
+                client_eval_results=client_eval_results,
             )
 
         return aggregated_result

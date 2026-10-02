@@ -22,12 +22,15 @@ def set_model_params(model, params):
 
 
 class HospitalClient(fl.client.NumPyClient):
-    def __init__(self, cid, data_dir, volume_ids, device, context=None):
+    def __init__(self, cid, data_dir, volume_ids, device, context=None,
+                 target_size=(64, 64, 64)):
         self.cid = cid
         self.device = device
         self.context = context
         self.model = build_unet3d().to(device)
-        self.dataset = BraTSVolumeDataset(data_dir, volume_ids)
+        self.dataset = BraTSVolumeDataset(
+            data_dir, volume_ids, target_size=target_size
+        )
         self.loader = DataLoader(self.dataset, batch_size=1, shuffle=True)
         self.loss_fn = DiceLoss(sigmoid=True)
         self.dice_metric = DiceMetric(include_background=True, reduction="mean")
@@ -41,7 +44,12 @@ class HospitalClient(fl.client.NumPyClient):
         self.model.train()
         local_epochs = config.get("local_epochs", 1)
         for _ in range(local_epochs):
-            for images, masks in self.loader:
+            for batch_idx, (images, masks) in enumerate(self.loader, start=1):
+                print(
+                    f"[client {self.cid}] training volume "
+                    f"{batch_idx}/{len(self.loader)}",
+                    flush=True,
+                )
                 images, masks = images.to(self.device), masks.to(self.device)
                 optimizer.zero_grad()
                 outputs = self.model(images)
@@ -49,6 +57,7 @@ class HospitalClient(fl.client.NumPyClient):
                 loss.backward()
                 optimizer.step()
         noisy_params = add_dp_noise(get_model_params(self.model), noise_multiplier=config.get("dp_noise_multiplier", 1.0))
+        print(f"[client {self.cid}] training complete; returning update", flush=True)
 
         # Encrypt the final layer (weight + bias) with TenSEAL, then decrypt
         # (demonstrates the crypto pipeline; true cross-process handoff blocked
