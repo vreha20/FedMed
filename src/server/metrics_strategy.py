@@ -34,7 +34,44 @@ class MetricsFedAvg(FedAvg):
 
     def aggregate_fit(self, rnd, results, failures):
         """Aggregate client training results."""
-        return super().aggregate_fit(rnd, results, failures)
+        aggregated_result = super().aggregate_fit(rnd, results, failures)
+
+        if aggregated_result is not None:
+            parameters_agg, metrics_agg = aggregated_result
+
+            loss = float(metrics_agg.get("loss", 0.0)) if metrics_agg else 0.0
+
+            # For fit, we might not have metrics, but if we do, forward them
+            # Note: In this implementation, fit doesn't typically produce metrics,
+            # but we check just in case
+            if metrics_agg:
+                # Check if there's a dice or accuracy metric in fit results
+                # (though fit typically doesn't produce evaluation metrics)
+                dice = metrics_agg.get("dice") or metrics_agg.get("accuracy")
+                if dice is not None:
+                    dice = float(dice)
+                    update_metrics(
+                        round_num=rnd,
+                        loss=loss,
+                        dice=dice,
+                        client_eval_results=results,  # Pass raw client results for per-client storage
+                    )
+                else:
+                    # Still update with loss even if no dice metric
+                    update_metrics(
+                        round_num=rnd,
+                        loss=loss,
+                        client_eval_results=results,
+                    )
+            else:
+                # Update with just loss if no metrics
+                update_metrics(
+                    round_num=rnd,
+                    loss=loss,
+                    client_eval_results=results,
+                )
+
+        return aggregated_result
 
     def aggregate_evaluate(self, rnd, results, failures):
         """Aggregate evaluation metrics and forward Dice score to the API."""
@@ -47,14 +84,14 @@ class MetricsFedAvg(FedAvg):
 
             loss = float(loss_agg) if loss_agg is not None else 0.0
 
-            dice = metrics_agg.get("dice")
+            dice = metrics_agg.get("dice") if metrics_agg else None
             if dice is not None:
                 dice = float(dice)
 
             update_metrics(
                 round_num=rnd,
                 loss=loss,
-                accuracy=dice,
+                dice=dice,
                 client_eval_results=results,  # Pass raw client results for per-client storage
             )
 

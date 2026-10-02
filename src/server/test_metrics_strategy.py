@@ -12,7 +12,7 @@ class TestMetricsFedAvg(unittest.TestCase):
     @patch("flwr.server.strategy.FedAvg.aggregate_fit")
     def test_aggregate_fit_calls_update_metrics(self, mock_super_agg):
         # Arrange
-        mock_super_agg.return_value = ([], {"loss": 0.5, "accuracy": 0.8})
+        mock_super_agg.return_value = ([], {"loss": 0.5, "dice": 0.8})
         strategy = MetricsFedAvg(
             fraction_fit=1.0,
             fraction_evaluate=1.0,
@@ -29,13 +29,13 @@ class TestMetricsFedAvg(unittest.TestCase):
             args, kwargs = mock_update.call_args
             self.assertEqual(kwargs.get("round_num"), 1)
             self.assertEqual(kwargs.get("loss"), 0.5)
-            self.assertEqual(kwargs.get("accuracy"), 0.8)
-            self.assertEqual(result, ([], {"loss": 0.5, "accuracy": 0.8}))
+            self.assertEqual(kwargs.get("dice"), 0.8)
+            self.assertEqual(result, ([], {"loss": 0.5, "dice": 0.8}))
 
     @patch("flwr.server.strategy.FedAvg.aggregate_evaluate")
     def test_aggregate_evaluate_calls_update_metrics(self, mock_super_agg):
         # Arrange
-        mock_super_agg.return_value = (0.3, {"accuracy": 0.75})
+        mock_super_agg.return_value = (0.3, {"dice": 0.75})
         strategy = MetricsFedAvg(
             fraction_fit=1.0,
             fraction_evaluate=1.0,
@@ -52,8 +52,8 @@ class TestMetricsFedAvg(unittest.TestCase):
             args, kwargs = mock_update.call_args
             self.assertEqual(kwargs.get("round_num"), 2)
             self.assertEqual(kwargs.get("loss"), 0.3)
-            self.assertEqual(kwargs.get("accuracy"), 0.75)
-            self.assertEqual(result, (0.3, {"accuracy": 0.75}))
+            self.assertEqual(kwargs.get("dice"), 0.75)
+            self.assertEqual(result, (0.3, {"dice": 0.75}))
 
     @patch("flwr.server.strategy.FedAvg.aggregate_fit")
     def test_aggregate_fit_handles_none_result(self, mock_super_agg):
