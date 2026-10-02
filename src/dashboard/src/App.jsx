@@ -30,6 +30,7 @@ function App() {
     setError(null)
 
     try {
+      // Use real data from APIs
       const [
         latestRes,
         historyRes,
@@ -247,8 +248,7 @@ function App() {
               </h2>
 
               <p>
-                Global model convergence across
-                federated rounds
+                Global model convergence across federated rounds
               </p>
 
             </div>
