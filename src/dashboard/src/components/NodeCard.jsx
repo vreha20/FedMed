@@ -13,16 +13,19 @@ const NodeCard = ({ clientId, clientData }) => {
   const isReporting = clientData.length > 0;
   const hasRecentData = latestEntry && (Date.now() / 1000 - latestEntry.timestamp) < 3600; // within last hour
 
-  // Format the latest dice and loss (we don't have loss in clientMetrics, only dice)
-  // The clientMetrics from backend only has dice, examples, round, timestamp
+  // Format the latest dice and examples from clientData
   const latestDice = latestEntry ? latestEntry.dice : 0;
   const latestExamples = latestEntry ? latestEntry.examples : 0;
+  const latestRound = latestEntry ? latestEntry.round : 0;
   const latestTimestamp = latestEntry ? latestEntry.timestamp : 0;
 
   // Format timestamp to HH:MM
   const formattedTime = latestTimestamp
     ? new Date(latestTimestamp * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     : '--:--';
+
+  // Format participation text
+  const participationText = `${participationCount} round${participationCount !== 1 ? 's' : ''}`;
 
   return (
     <div className="node-card">
@@ -36,8 +39,8 @@ const NodeCard = ({ clientId, clientData }) => {
 
       <div className="node-card-body">
         <div className="node-metric">
-          <div className="metric-label">Last Round</div>
-          <div className="metric-value">{latestEntry ? latestEntry.round : 'N/A'}</div>
+          <div className="metric-label">Latest Round</div>
+          <div className="metric-value">{latestRound}</div>
         </div>
 
         <div className="node-metric">
@@ -46,13 +49,13 @@ const NodeCard = ({ clientId, clientData }) => {
         </div>
 
         <div className="node-metric">
-          <div className="metric-label">Training Examples</div>
+          <div className="metric-label">Examples</div>
           <div className="metric-value">{latestExamples}</div>
         </div>
 
         <div className="node-metric">
           <div className="metric-label">Participation</div>
-          <div className="metric-value">{participationCount} rounds</div>
+          <div className="metric-value">{participationText}</div>
         </div>
 
         <div className="node-metric">

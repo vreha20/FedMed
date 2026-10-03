@@ -14,7 +14,7 @@ const KPISection = ({ latest, history, clientMetrics }) => {
 
   // Get latest loss and dice
   const latestLoss = latest ? latest.loss : 0;
-  const latestDice = latest && latest.dice !== null ? latest.dice : 'N/A';
+  const latestDice = latest && latest.dice !== null ? latest.dice : null;
 
   // Get latest round
   const latestRound = latest ? latest.round : 0;
@@ -27,28 +27,28 @@ const KPISection = ({ latest, history, clientMetrics }) => {
           value={latestRound}
           suffix=""
           icon="🔄"
-          helpText="Current federated learning round"
+          helpText="Current federated learning round completed"
         />
         <KPICard
-          title="Loss"
+          title="Training Loss"
           value={latestLoss}
           suffix=""
           icon="📉"
-          helpText="Training loss (lower is better)"
+          helpText="Binary cross-entropy loss (lower indicates better model fit)"
         />
         <KPICard
           title="Dice Score"
-          value={latestDice}
+          value={latestDice !== null ? latestDice : 0}
           suffix=""
           icon="🎯"
-          helpText="Segmentation overlap score"
+          helpText="Segmentation overlap score (higher is better, 0-1 range)"
         />
         <KPICard
           title="Active Nodes"
           value={activeNodes}
           suffix=""
           icon="🏥"
-          helpText="Number of participating healthcare nodes"
+          helpText="Nodes that reported metrics in the current round"
         />
       </div>
     </section>

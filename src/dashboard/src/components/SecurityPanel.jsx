@@ -1,5 +1,5 @@
-import React from 'react'
-import './SecurityPanel.css'
+import React from 'react';
+import './SecurityPanel.css';
 
 function SecurityPanel({ security, loading }) {
   if (loading && !security) {
@@ -9,7 +9,7 @@ function SecurityPanel({ security, loading }) {
           Loading privacy and security status...
         </div>
       </section>
-    )
+    );
   }
 
   if (!security) {
@@ -27,11 +27,14 @@ function SecurityPanel({ security, loading }) {
           </div>
         </div>
       </section>
-    )
+    );
   }
 
-  const differentialPrivacy = security.differential_privacy
-  const homomorphicEncryption = security.homomorphic_encryption
+  const differentialPrivacy = security.differential_privacy;
+  const homomorphicEncryption = security.homomorphic_encryption;
+
+  // Determine if TenSEAL is available based on security data
+  const tenSEALAvailable = homomorphicEncryption?.enabled || false;
 
   return (
     <section className="security-panel">
@@ -71,6 +74,10 @@ function SecurityPanel({ security, loading }) {
             {differentialPrivacy?.enabled && (
               <p className="security-description">
                 {differentialPrivacy?.mechanism || 'Gaussian noise applied to model updates'}
+                <br />
+                <span className="security-note">
+                  Note: This is not a formal differential privacy guarantee.
+                </span>
               </p>
             )}
             {!differentialPrivacy?.enabled && (
@@ -89,20 +96,28 @@ function SecurityPanel({ security, loading }) {
           <div className="security-card-body">
             <div className="security-status">
               <span className={`security-indicator ${
-                homomorphicEncryption?.enabled ? 'enabled' : 'disabled'
+                tenSEALAvailable ? 'enabled' : 'disabled'
               }`} />
               <span className="security-status-text">
-                {homomorphicEncryption?.enabled ? 'Enabled' : 'Disabled'}
+                {tenSEALAvailable ? 'Enabled' : 'Disabled'}
               </span>
             </div>
-            {homomorphicEncryption?.enabled && (
+            {tenSEALAvailable && (
               <p className="security-description">
                 {homomorphicEncryption?.library || 'TenSEAL library'}
+                <br />
+                <span className="security-note">
+                  Scheme: {homomorphicEncryption?.scheme || 'CKKS'}
+                </span>
               </p>
             )}
-            {!homomorphicEncryption?.enabled && (
+            {!tenSEALAvailable && (
               <p className="security-description">
                 Homomorphic encryption library unavailable
+                <br />
+                <span className="security-note">
+                  TenSEAL not available in current environment
+                </span>
               </p>
             )}
           </div>
@@ -115,7 +130,7 @@ function SecurityPanel({ security, loading }) {
           </div>
           <div className="security-card-body">
             <p className="security-description">
-              {homomorphicEncryption?.scheme || 'N/A'}
+              {tenSEALAvailable ? (homomorphicEncryption?.scheme || 'CKKS') : 'N/A'}
             </p>
           </div>
         </div>
@@ -127,13 +142,13 @@ function SecurityPanel({ security, loading }) {
           </div>
           <div className="security-card-body">
             <p className="security-description">
-              {differentialPrivacy?.mechanism || 'N/A'}
+              {differentialPrivacy?.mechanism || 'Gaussian noise applied to model updates'}
             </p>
           </div>
         </div>
       </div>
     </section>
-  )
+  );
 }
 
-export default SecurityPanel
+export default SecurityPanel;

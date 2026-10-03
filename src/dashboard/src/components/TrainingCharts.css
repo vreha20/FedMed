@@ -19,6 +19,13 @@
   color: #94a3b8;
 }
 
+.chart-note {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: #64748b;
+  font-style: italic;
+}
+
 .charts-empty {
   text-align: center;
   padding: 3rem;
@@ -34,10 +41,16 @@
 }
 
 .chart-panel {
-  background: rgba(30, 41, 59, 0.6);
+  background: linear-gradient(145deg, #0f172a, #1e293b);
   border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 0.75rem;
-  padding: 1.5rem;
+  border-radius: 1rem;
+  padding: 1.75rem;
+  transition: all 0.3s ease;
+}
+
+.chart-panel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .chart-panel h3 {
@@ -49,7 +62,7 @@
 
 .chart-wrapper {
   width: 100%;
-  height: 180px;
+  height: 200px;
   position: relative;
 }
 
@@ -69,20 +82,27 @@
 .loss-line {
   fill: none;
   stroke: #ef4444;
-  stroke-width: 2;
+  stroke-width: 2.5;
 }
 
 .dice-line {
   fill: none;
   stroke: #10b981;
-  stroke-width: 2;
+  stroke-width: 2.5;
 }
 
 /* Chart points */
-.loss-point {
-  fill: #ef4444;
+.chart-point {
+  transition: all 0.2s ease;
 }
 
-.dice-point {
-  fill: #10b981;
+.chart-point:hover {
+  r: 8;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.point-group text {
+  font-size: 12px;
+  font-weight: 600;
+  pointer-events: none;
 }

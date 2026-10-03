@@ -2,21 +2,41 @@ import React from 'react';
 import './Header.css';
 
 const Header = ({ latest, history, clientMetrics, health }) => {
-  // Calculate system status from health
-  const systemStatus = health ? 'online' : 'offline';
-  const systemStatusText = health ? 'Operational' : 'Offline';
+  // Calculate API connection status from health
+  const apiStatus = health ? 'online' : 'offline';
+  const apiStatusText = apiStatus === 'online' ? 'Online' : 'Offline';
 
-  // Calculate federation status: number of connected clients
-  let connectedNodes = 0;
+  // Calculate last updated timestamp from latest or history
+  let lastUpdatedTimestamp = null;
+  if (latest && latest.timestamp) {
+    lastUpdatedTimestamp = latest.timestamp;
+  } else if (history.length > 0) {
+    lastUpdatedTimestamp = history[history.length - 1].timestamp;
+  }
+
+  // Format last updated time (e.g., "2m ago", "Just now")
+  const getLastUpdatedString = (timestamp) => {
+    if (!timestamp) return '';
+    const now = Math.floor(Date.now() / 1000);
+    const diff = now - timestamp;
+    if (diff < 5) return 'Just now';
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    return `${Math.floor(diff / 3600)}h ago`;
+  };
+  const lastUpdatedString = getLastUpdatedString(lastUpdatedTimestamp);
+
+  // Calculate active federation nodes: clients with data in the latest round
+  let activeNodes = 0;
   let totalNodes = 0;
-  if (clientMetrics) {
+  if (clientMetrics && latest && latest.round > 0) {
+    const latestRound = latest.round;
     totalNodes = Object.keys(clientMetrics).length;
-    // A node is considered connected if it has at least one entry in clientMetrics
-    connectedNodes = totalNodes; // In our setup, if they are in clientMetrics, they have participated
+    activeNodes = Object.values(clientMetrics).filter(clientData =>
+      clientData.some(entry => entry.round === latestRound)
+    ).length;
   } else {
-    // If we don't have clientMetrics, we can't know, so assume 0
-    totalNodes = 3; // We expect 3 nodes
-    connectedNodes = 0;
+    totalNodes = clientMetrics ? Object.keys(clientMetrics).length : 0;
   }
 
   // Get latest round from history or latest
@@ -36,23 +56,28 @@ const Header = ({ latest, history, clientMetrics, health }) => {
 
         <div className="header-status">
           <div className="status-item">
-            <div className="status-label">SYSTEM STATUS</div>
+            <div className="status-label">API STATUS</div>
             <div className="status-value">
-              <span className={`status-dot ${systemStatus}`} />
-              {systemStatusText}
+              <span className={`status-dot ${apiStatus}`} />
+              {apiStatusText}
+              {lastUpdatedString && (
+                <span className="status-detail">{lastUpdatedString}</span>
+              )}
             </div>
           </div>
 
           <div className="status-item">
-            <div className="status-label">FEDERATION</div>
+            <div className="status-label">ACTIVE NODES</div>
             <div className="status-value">
-              {connectedNodes} / {totalNodes} NODES
+              {activeNodes} / {totalNodes}
             </div>
           </div>
 
           <div className="status-item">
-            <div className="status-label">LATEST ROUND</div>
-            <div className="status-value">Round {latestRound}</div>
+            <div className="status-label">CURRENT ROUND</div>
+            <div className="status-value">
+              Round {latestRound}
+            </div>
           </div>
         </div>
       </div>
