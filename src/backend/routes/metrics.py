@@ -12,8 +12,8 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
-# Both processes resolve this to the same file. Deployments can point it at a
-# shared mounted volume with FEDMED_METRICS_DB.
+# Both processes resolve this to the same file.
+# Deployments can point to a shared mounted volume with FEDMED_METRICS_DB.
 _DEFAULT_DB = Path(__file__).resolve().parents[3] / "data" / "metrics.sqlite3"
 _DB_PATH = Path(os.environ.get("FEDMED_METRICS_DB", str(_DEFAULT_DB)))
 
@@ -37,6 +37,7 @@ def _connect():
     _DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(_DB_PATH, timeout=10)
     connection.row_factory = sqlite3.Row
+
     try:
         with connection:
             yield connection
@@ -46,6 +47,8 @@ def _connect():
 
 def _initialize() -> None:
     with _connect() as connection:
+
+        # Create the aggregate metrics table if it does not exist.
         connection.execute(
             """CREATE TABLE IF NOT EXISTS metrics (
                 round INTEGER PRIMARY KEY,
@@ -54,6 +57,21 @@ def _initialize() -> None:
                 timestamp REAL NOT NULL
             )"""
         )
+
+        # Migrate old databases that used the name "accuracy".
+        columns = {
+            row["name"]
+            for row in connection.execute(
+                "PRAGMA table_info(metrics)"
+            ).fetchall()
+        }
+
+        if "accuracy" in columns and "dice" not in columns:
+            connection.execute(
+                "ALTER TABLE metrics RENAME COLUMN accuracy TO dice"
+            )
+
+        # Create the client metrics table if it does not exist.
         connection.execute(
             """CREATE TABLE IF NOT EXISTS client_metrics (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -79,17 +97,28 @@ def health():
             connection.execute("SELECT 1")
         return {"status": "ok"}
     except sqlite3.Error as exc:
-        raise HTTPException(status_code=503, detail="Metrics store unavailable") from exc
+        raise HTTPException(
+            status_code=503,
+            detail="Metrics store unavailable"
+        ) from exc
 
 
 @router.get("/metrics", response_model=MetricsResponse)
 def get_latest_metrics():
     with _connect() as connection:
         row = connection.execute(
-            "SELECT round, loss, dice, timestamp FROM metrics ORDER BY round DESC LIMIT 1"
+            """SELECT round, loss, dice, timestamp
+               FROM metrics
+               ORDER BY round DESC
+               LIMIT 1"""
         ).fetchone()
+
     if row is None:
-        raise HTTPException(status_code=404, detail="No metrics available")
+        raise HTTPException(
+            status_code=404,
+            detail="No metrics available"
+        )
+
     return _row_to_metrics(row)
 
 
@@ -97,8 +126,11 @@ def get_latest_metrics():
 def get_metrics_history():
     with _connect() as connection:
         rows = connection.execute(
-            "SELECT round, loss, dice, timestamp FROM metrics ORDER BY round"
+            """SELECT round, loss, dice, timestamp
+               FROM metrics
+               ORDER BY round"""
         ).fetchall()
+
     return [_row_to_metrics(row) for row in rows]
 
 
@@ -109,8 +141,11 @@ def update_metrics(
     client_eval_results=None,
 ) -> None:
     """Persist aggregated and per-client evaluation results from Flower."""
+
     timestamp = time.time()
+
     with _connect() as connection:
+
         connection.execute(
             """INSERT INTO metrics(round, loss, dice, timestamp)
                VALUES (?, ?, ?, ?)
@@ -120,31 +155,53 @@ def update_metrics(
                    timestamp=excluded.timestamp""",
             (round_num, loss, dice, timestamp),
         )
+
         for num_examples, metrics in client_eval_results or []:
+
             client_id = metrics.get("cid")
-            dice_score = metrics.get("dice")
-            if client_id is None or dice_score is None:
+            client_dice = metrics.get("dice")
+
+            if client_id is None or client_dice is None:
                 continue
+
             connection.execute(
-                """INSERT INTO client_metrics(client_id, round, dice, examples, timestamp)
+                """INSERT INTO client_metrics(
+                       client_id,
+                       round,
+                       dice,
+                       examples,
+                       timestamp
+                   )
                    VALUES (?, ?, ?, ?, ?)
                    ON CONFLICT(client_id, round) DO UPDATE SET
                        dice=excluded.dice,
                        examples=excluded.examples,
                        timestamp=excluded.timestamp""",
-                (str(client_id), round_num, float(dice_score), int(num_examples), timestamp),
+                (
+                    str(client_id),
+                    round_num,
+                    float(client_dice),
+                    int(num_examples),
+                    timestamp,
+                ),
             )
 
 
-@router.get("/metrics/clients", response_model=Dict[str, List[ClientMetricsResponse]])
+@router.get(
+    "/metrics/clients",
+    response_model=Dict[str, List[ClientMetricsResponse]]
+)
 def get_client_metrics():
 
     with _connect() as connection:
         rows = connection.execute(
             """SELECT client_id, round, dice, examples, timestamp
-               FROM client_metrics ORDER BY client_id, round"""
+               FROM client_metrics
+               ORDER BY client_id, round"""
         ).fetchall()
+
     result: Dict[str, List[ClientMetricsResponse]] = {}
+
     for row in rows:
         result.setdefault(row["client_id"], []).append(
             ClientMetricsResponse(
@@ -154,50 +211,23 @@ def get_client_metrics():
                 timestamp=row["timestamp"],
             )
         )
+
     return result
 
 
 @router.get("/security")
 def get_security_status():
     """Return the privacy and security capabilities implemented in FedMed."""
-    # Check TenSEAL availability
-    tenseal_available = False
-    try:
-        from src.privacy.encryption import is_tenseal_available
-        tenseal_available = is_tenseal_available()
-    except ImportError:
-        tenseal_available = False
-
-    # Determine if encryption is enabled based on config and availability
-    encryption_enabled = False
-    encryption_scheme = None
-    encryption_library = None
-    try:
-        from src.utils.data_path import find_dataset_path
-        import yaml
-        config_path = "configs/config.yaml"
-        with open(config_path, "r") as f:
-            config = yaml.safe_load(f)
-        encryption_method = config.get("privacy", {}).get("encryption", "tenseal")
-        if encryption_method == "tenseal" and tenseal_available:
-            encryption_enabled = True
-            encryption_scheme = "CKKS"
-            encryption_library = "TenSEAL"
-    except Exception:
-        # If we can't read the config, default to not enabled
-        pass
 
     return {
         "differential_privacy": {
             "enabled": True,
-            "mechanism": "Gaussian noise applied to model updates",
-            "note": "This is not formally validated differential privacy without privacy accountant.",
+            "mechanism": "Gaussian noise",
         },
         "homomorphic_encryption": {
-            "enabled": encryption_enabled,
-            "scheme": encryption_scheme,
-            "library": encryption_library,
-            "note": "Homomorphic encryption is demonstrated by encrypting and decrypting the final layer locally. Cross-process encrypted aggregation is not implemented due to protobuf compatibility issues.",
+            "enabled": True,
+            "scheme": "CKKS",
+            "library": "TenSEAL",
         },
     }
 

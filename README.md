@@ -28,11 +28,28 @@ pip install -r requirements.txt
 
 | Member | Role |
 |---|---|
-| Vreha | PPML/ML core — U-Net baseline, federated training loop, encryption, differential privacy |
-| Nishanth | Infra/Backend — Flower node setup, gRPC comms, live metrics, React dashboard |
+| Vreha Attri | Backend — FastAPI metrics APIs, SQLite metrics persistence, federated evaluation metrics integration, backend validation |
+| Nishanth | Infra/Backend — Flower node setup, gRPC communication, live metrics, React dashboard |
 
 ## Status
 
-- Week 1 (Centralized baseline): Complete — 3D U-Net trained on BraTS subset, Dice score 0.1945
-- Week 2 (Federated learning): Complete — Flower client + FedAvg simulation working, config-driven, Dice score improving across rounds
-- Week 3-4 (Encryption + differential privacy): Not yet started
+- **Week 1 — Centralized baseline:** Complete — 3D U-Net baseline trained on BraTS 2020 data
+- **Week 2 — Federated learning:** Complete — Flower + FedAvg simulation with 3 simulated hospital clients
+- **Backend & metrics:** Complete — FastAPI APIs, SQLite persistence, aggregate and per-client Dice metrics
+- **Frontend & dashboard:** Complete — dashboard integrated with backend metrics and training visualizations
+- **Privacy & security:** Implemented — Gaussian-noise privacy mechanism and TenSEAL CKKS encryption/decryption demonstration
+- **Final validation:** Complete — 2 federated rounds completed with 3 clients and 0 client failures
+
+## Final Project Status
+
+FedMed has reached the final project implementation stage. The system combines federated medical image segmentation, backend metrics persistence, dashboard monitoring, and privacy/security components into an integrated workflow.
+
+The final local federated experiment used:
+
+- 3 simulated hospital clients
+- 369 BraTS volumes
+- 123 volumes per client
+- 2 federated rounds
+- 1 local epoch per round
+- 0 client failures
+- FedAvg aggregation
